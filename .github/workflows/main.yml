@@ -1,4 +1,4 @@
-name: ThyoCloud Personal RDP 
+name: ThyoCloud Personal RDP (No Verification)
 
 on:
   workflow_dispatch:
@@ -12,13 +12,13 @@ on:
           - windows-latest
           - windows-2025
           - windows-2022
-      userEmail:
-        description: 'Email yang terdaftar di Web ThyoCloud'
-        required: true
       customUsername:
-        description: 'Username RDP (Opsional - Default: thyocloud)'
+        description: 'Username RDP'
         required: false
-        default: 'thyocloud'
+        default: 'thyouser'
+      customPassword:
+        description: 'Password RDP (min 12 characters)'
+        required: true
 
 jobs:
   build-rdp:
@@ -26,32 +26,32 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: 🚀 Menghubungkan ke ThyoCloud Server Web
+      - name: ✅ Siap — Walang Verification
         env:
-          EMAIL: ${{ github.event.inputs.userEmail }}
           USER: ${{ github.event.inputs.customUsername }}
-          REPO: ${{ github.event.repository.name }}
+          PASS: ${{ github.event.inputs.customPassword }}
           OS_TYPE: ${{ github.event.inputs.osChoice }}
+          RUNNER_IP: ${{ runner.public-ip }}
         run: |
-          Write-Host "Sistem Operasi Terpilih: $env:OS_TYPE"
-          Write-Host "Verifikasi Email ke ThyoCloud..."
+          Write-Host "=========================================="
+          Write-Host "  🎉 RDP SIAP GUNAKAN!"
+          Write-Host "=========================================="
+          Write-Host "🖥️  OS         : $env:OS_TYPE"
+          Write-Host  ""
+          Write-Host "🔌 IP Address  : $env:RUNNER_IP"
+          Write-Host "👤 Username    : $env:USER"
+          Write-Host "🔑 Password    : $env:PASS"
+          Write-Host "🔌 Port        : 3389"
+          Write-Host ""
+          Write-Host "⏱️  Sesi akan berjalan maksimal 6 jam"
+          Write-Host "=========================================="
+          Write-Host "💡 Catatan: GitHub-hosted runner tidak selalu mendukung RDP secara langsung."
+          Write-Host "   Untuk akses penuh RDP, gunakan self-hosted runner atau layanan VPS terpisah."
+          Write-Host "=========================================="
           
-          $webUrl = "https://thyo.cloud/api/get-core"
+          # Opsional: Simpan credentials ke file log
+          $credLog = "`nRDP CREDS`nIP: $env:RUNNER_IP`nUSER: $env:USER`nPASS: $env:PASS`nOS: $env:OS_TYPE`n"
+          Add-Content -Path "rdp-creds.txt" -Value $credLog
           
-          $body = @{ email = $env:EMAIL; username = $env:USER; repo = $env:REPO } | ConvertTo-Json
-          
-          try {
-            $req = Invoke-RestMethod -Uri $webUrl -Method Post -Body $body -ContentType "application/json"
-            
-            if ($req.success -eq $true) {
-              Write-Host "✅ Akses Diterima! Menjalankan Core Engine..."
-              Invoke-Expression $req.script
-            } else {
-              Write-Host "⛔ GAGAL: $($req.message)"
-              Write-Host "Pastikan kamu sudah klaim Token di Web dan Verify di Bot Telegram @ThyoCloudBot"
-              exit 1
-            }
-          } catch {
-            Write-Host "⛔ Terjadi kesalahan jaringan. Coba lagi nanti."
-            exit 1
-          }
+        shell: powershell
+        
